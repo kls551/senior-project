@@ -6,13 +6,18 @@
         <input type="text" name="name" placeholder="NAME" v-model="name" />
       </div>
       <div>
-        <textarea rows="15" cols="15" placeholder="DESCRIPTION" v-model="description"></textarea>
+        <textarea
+          rows="15"
+          cols="15"
+          placeholder="DESCRIPTION"
+          v-model="description"
+        />
       </div>
       <div>
         <input type="text" name="brand" placeholder="BRAND" v-model="brand" />
       </div>
       <div>
-        <input type="number" name="weight" placeholder="WEIGHT" v-model="weight" />
+        <input type="number" placeholder="WEIGHT" v-model="weight" />
       </div>
       <div>
         <input type="text" name="type" placeholder="TYPE" v-model="type" />
@@ -21,7 +26,7 @@
         <input type="number" name="price" placeholder="PRICE" v-model="price" />
       </div>
       <div>
-        <input type="number" name="quantity" placeholder="QUANTITY" v-model="quantity" />
+        <input type="number" placeholder="QUANTITY" v-model="quantity" />
       </div>
       <div>
         <button class="app_item_btn" @click="addItem">Add</button>
@@ -32,25 +37,25 @@
 </template>
 
 <script>
-import services from '@/services/services'
+import services from "@/services/services";
 export default {
-  name: 'additem',
-  data () {
+  name: "additem",
+  data() {
     return {
-      name: '',
-      description: '',
-      brand: '',
-      weight: '',
-      type: '',
-      price: '',
-      quantity: ''
-    }
+      name: "",
+      description: "",
+      brand: "",
+      weight: "",
+      type: "",
+      price: "",
+      quantity: ""
+    };
   },
   methods: {
-    cancel () {
-      this.$router.push({ name: 'Items' })
+    cancel() {
+      this.$router.push({ name: "Items" });
     },
-    async addItem () {
+    async addItem() {
       await services.addItem({
         name: this.name,
         description: this.description,
@@ -60,13 +65,10 @@ export default {
         price: this.price,
         busQuantity: this.busQuantity,
         quantity: this.quantity
-      })
-      this.$swal('Great!', `Your item has been added!`, 'success')
-      this.$router.push({ name: 'Items' })
+      });
+      this.$swal("Great!", `Your item has been added!`, "success");
+      this.$router.push({ name: "Items" });
     }
   }
-}
+};
 </script>
-
-<style type="text/css">
-</style>

@@ -1,62 +1,83 @@
-import Vue from 'vue'
-import Router from 'vue-router'
-import Items from '@/components/Items'
-import additem from '@/components/AddItem'
-import edititem from '@/components/EditItem'
-import adduser from '@/components/AddUser'
-import VueMaterial from 'vue-material'
-import Users from '@/components/users'
-import 'vue-material/dist/vue-material.min.css'
-import 'vue-material/dist/theme/default.css'
-import Login from '@/components/Login'
-import Register from '@/components/Register'
-import Order from '@/components/Order'
+import Vue from "vue";
+import Router from "vue-router";
 
-Vue.use(Router)
-Vue.use(VueMaterial)
+import VueMaterial from "vue-material";
+import "vue-material/dist/vue-material.min.css";
+import "vue-material/dist/theme/default.css";
+
+import Users from "@/components/Users";
+import Items from "@/components/Items";
+import AddItem from "@/components/AddItem";
+import Login from "@/components/Login";
+import Order from "@/components/Order";
+import SingleItem from "@/components/SingleItem";
+import Cart from "@/components/Cart";
+import Home from "@/components/Home";
+import Profile from "@/components/Profile";
+
+Vue.use(Router);
+Vue.use(VueMaterial);
 
 export const router = new Router({
-  mode: 'history',
+  mode: "history",
   routes: [
     {
-      path: '/',
-      name: 'Items',
+      path: "/",
+      name: "home",
+      component: Home
+    },
+    {
+      path: "/profile",
+      name: "profile",
+      component: Profile
+    },
+    {
+      path: "/items",
+      name: "items",
       component: Items
     },
     {
-      path: '/items/add',
-      component: additem,
-      name: 'additem'
+      path: "/items/add",
+      component: AddItem,
+      name: "additem"
     },
     {
-      path: '/items/:id/edit',
-      component: edititem,
-      name: 'edititem'
-    },
-    {
-      path: '/users/add',
-      component: adduser,
-      name: 'adduser'
-    },
-    {
-      path: '/users',
+      path: "/users",
       component: Users,
-      name: 'users'
+      name: "users"
     },
     {
-      path: '/login',
-      name: 'Login',
+      path: "/login",
+      name: "login",
       component: Login
     },
     {
-      path: '/register',
-      name: 'Register',
-      component: Register
+      path: "/order",
+      name: "order",
+      component: Order
     },
     {
-      path: '/order',
-      name: 'Order',
-      component: Order
+      path: "/item",
+      name: "singleItem",
+      component: SingleItem,
+      props: true
+    },
+    {
+      path: "/cart",
+      name: "cart",
+      component: Cart
     }
   ]
-})
+});
+
+router.beforeEach((to, from, next) => {
+  if (to.name !== "login") {
+    if (localStorage.getItem("jwtToken")) {
+      next();
+    } else {
+      next("/login");
+    }
+  } else {
+    next();
+  }
+});

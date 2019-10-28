@@ -10,7 +10,8 @@ var ItemSchema = new Schema({
   description: String,
   brand: String,
   attr: [attr],
-  busAttr: [{quantity: Number, buyPrice: Number}]
+  busAttr: [{ quantity: Number, buyPrice: Number }],
+  images: [String]
 });
 
 var Item = mongoose.model("Item", ItemSchema);

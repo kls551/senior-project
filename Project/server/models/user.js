@@ -17,7 +17,16 @@ var UserSchema = new Schema({
     type: String,
     required: true
   },
-  admin: Boolean
+  admin: Boolean,
+  cart: [{
+    quantity: Number,
+    index: Number,
+    item:
+      {
+        type: Schema.Types.ObjectId,
+        ref: 'Item'
+      }
+  }]
 });
 
 UserSchema.pre('save', function (next) {

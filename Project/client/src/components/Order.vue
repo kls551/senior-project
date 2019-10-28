@@ -1,77 +1,111 @@
 <template>
   <div>
-    <b-table :items="orders" :fields="fields" striped>
-      <template slot="show_details" slot-scope="row">
-        <b-button
-          size="sm"
-          @click="row.toggleDetails"
-          class="mr-2"
-        >{{ row.detailsShowing ? 'Hide' : 'Show'}} Details</b-button>
-
-        <!-- As `row.showDetails` is one-way, we call the toggleDetails function on @change -->
-        <!-- <b-form-checkbox v-model="row.detailsShowing" @change="row.toggleDetails">
-          Details via check
-        </b-form-checkbox>-->
+    <div style="text-align: center">
+      <b-spinner
+        style="display: inline-block"
+        v-if="loading"
+        variant="primary"
+        type="grow"
+        label="Spinning"
+      ></b-spinner>
+    </div>
+    <b-table
+      v-if="!loading"
+      head-variant="dark"
+      class="table-wrap"
+      :items="orders"
+      :fields="fields"
+    >
+      <template v-slot:cell(show_details)="row">
+        <b-button size="sm" @click="row.toggleDetails" class="mr-2">
+          {{ row.detailsShowing ? "Hide" : "Show" }} Details
+        </b-button>
       </template>
 
-      <template slot="row-details" slot-scope="row">
-        <b-card>
-          <b-row class="mb-2">
-            <b-col sm="3" class="text-sm-right">
-              <b>Items:</b>
-            </b-col>
-            <b-col>{{ row.item.items.name }}</b-col>
-            <b-col sm="3" class="text-sm-right">
-              <b>Items:</b>
-            </b-col>
-            <b-col>{{ row.item.items.name }}</b-col>
-          </b-row>
-
-          <!-- <b-row class="mb-2">
-            <b-col sm="3" class="text-sm-right"><b>Is Active:</b></b-col>
-            <b-col>{{ row.item.isActive }}</b-col>
-          </b-row>-->
-
-          <!-- <b-button size="sm" @click="row.toggleDetails">Hide Details</b-button> -->
-        </b-card>
+      <template v-slot:row-details="row">
+        <b-table
+          class="table-dark"
+          :items="row.item.table"
+          :fields="innerFields"
+        />
       </template>
     </b-table>
   </div>
 </template>
 
 <script>
-import services from '@/services/services'
+import services from "@/services/services";
 export default {
-  data () {
+  data() {
     return {
-      fields: ['orderDate', 'totalAmount', 'show_details'],
+      fields: [
+        { key: "seller.name", label: "Cashier", sortable: true },
+        { key: "orderDate", sortable: true },
+        { key: "orderTime", sortable: true },
+        { key: "totalAmount", sortable: true },
+        { key: "revenue", sortable: true },
+        "show_details"
+      ],
       items: [],
-      orders: [
-        { isActive: true, age: 40, orderDate: '2/20/2019', totalAmount: 200 },
-        { isActive: false, age: 21, orderDate: '2/2/2019', totalAmount: 100 },
-        {
-          isActive: false,
-          age: 89,
-          orderDate: '8/18/2010',
-          totalAmount: 30
-        },
-        { isActive: true, age: 38, orderDate: '2/3/2010', totalAmount: 60 }
-      ]
-    }
+      orders: [],
+      loading: false,
+      innerFields: ["name", "type", "price", "quantity", "itemTotal"]
+    };
   },
-  mounted () {
-    this.getItems()
+  mounted() {
+    this.getItems();
   },
   methods: {
-    async getItems () {
-      const response = await services.fetchItems()
-      this.items = response.data.items
-      this.orders.map(order => {
-        order.items = response.data.items[0]
-        return order
-      })
-      console.log(this.orders)
+    processData(data) {
+      data.forEach(order => {
+        let orderDate = new Date(order.orderDate);
+        order.orderDate = orderDate.toDateString();
+        order.orderTime =
+          orderDate.getHours().toString() +
+          ":" +
+          orderDate.getMinutes().toString();
+        order.items.forEach(item => {
+          let info = {
+            name: item.item.name,
+            type: item.item.attr[item.index].type,
+            price: item.price,
+            quantity: item.quantity,
+            itemTotal: item.price * item.quantity
+          };
+          if (!order.table) {
+            order.table = [info];
+          } else {
+            order.table.push(info);
+          }
+        });
+      });
+      return data;
+    },
+    async getItems() {
+      this.loading = true;
+      const response = await services.fetchOrders();
+      console.log(response.data);
+
+      this.orders = this.processData(response.data);
+      console.log(this.orders);
+      this.loading = false;
     }
   }
-}
+};
 </script>
+
+<style type="text/css" scoped>
+.table-wrap {
+  width: 60%;
+  margin: 0 auto;
+  text-align: center;
+  margin-top: 20px;
+}
+.full-table {
+  margin: 20px;
+  width: 100%;
+}
+.button {
+  align-items: left;
+}
+</style>

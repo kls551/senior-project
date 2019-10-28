@@ -3,7 +3,7 @@
     <b-col cols="6">
       <div v-if="errors && errors.length">
         <div v-for="error of errors" :key="error">
-          <b-alert show>{{error.message}}</b-alert>
+          <b-alert show>{{ error.message }}</b-alert>
         </div>
       </div>
       <b-form @submit="onSubmit">
@@ -14,7 +14,7 @@
           breakpoint="md"
           label="Enter Username"
         >
-          <b-form-input id="username" v-model.trim="login.username"></b-form-input>
+          <b-form-input id="username" v-model.trim="login.username" />
         </b-form-group>
         <b-form-group
           id="fieldsetHorizontal"
@@ -23,10 +23,9 @@
           breakpoint="md"
           label="Enter Password"
         >
-          <b-form-input type="password" id="password" v-model.trim="login.password"></b-form-input>
+          <b-form-input type="password" v-model.trim="login.password" />
         </b-form-group>
         <b-button type="submit" variant="primary">Login</b-button>
-        <b-button type="button" variant="success" @click.stop="register()">Register</b-button>
       </b-form>
     </b-col>
   </b-row>
@@ -45,32 +44,33 @@ export default {
     };
   },
   methods: {
-    onSubmit(evt) {
+    async onSubmit(evt) {
       evt.preventDefault();
-      axios
-        .post(`http://localhost:8081/login/`, this.login)
-        .then(response => {
+
+      try {
+        let response = await axios.post(
+          "http://localhost:8081/login",
+          this.login
+        );
+        if (response.data.success === true) {
           localStorage.setItem("jwtToken", response.data.token);
+          localStorage.setItem("admin", response.data.admin);
+          localStorage.setItem("username", response.data.name);
           this.$router.push({
             name: "users"
           });
-        })
-        .catch(e => {
-          console.log(e);
-          this.errors.push(e);
-        });
-    },
-    register() {
-      this.$router.push({
-        name: "Register"
-      });
+        }
+      } catch (e) {
+        this.$swal("Error Logging in", e.toString(), "error");
+        this.errors.push(e);
+      }
     }
   }
 };
 </script>
 
 
-<style>
+<style scoped>
 form {
   margin-top: 100px;
 }

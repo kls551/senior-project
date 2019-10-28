@@ -1,12 +1,22 @@
 <template>
   <div id="app">
-    <md-toolbar class="md-primary" md-elevation="1">
-      <md-button v-bind:to="{ name: 'users' }" class="md-primary">Users</md-button>
-      <md-button v-bind:to="{ name: 'Items' }" class="md-primary">Items</md-button>
-      <md-button v-bind:to="{ name: 'Login' }" class="md-primary">Login</md-button>
-      <md-button v-bind:to="{ name: 'Order' }" class="md-primary">Order</md-button>
+    <md-toolbar md-elevation="1">
+      <div v-if="isLogin()">
+        <md-button :to="{ name: 'profile' }" v-if="isLogin()">
+          <font-awesome-icon icon="portrait" size="2x" />
+        </md-button>
+        <md-button v-bind:to="{ name: 'users' }">Users</md-button>
+        <md-button v-bind:to="{ name: 'items' }">Items</md-button>
+        <md-button v-bind:to="{ name: 'order' }">Order</md-button>
+      </div>
       <div class="md-toolbar-section-end">
-        <md-button @click="logout()" class="md-primary">Logout</md-button>
+        <md-button :to="{ name: 'cart' }" v-if="isLogin()">
+          <font-awesome-icon icon="shopping-basket" size="2x" />
+        </md-button>
+        <md-button v-if="!isLogin()" v-bind:to="{ name: 'login' }">
+          Login
+        </md-button>
+        <md-button v-if="isLogin()" to @click="logout()">Logout</md-button>
       </div>
     </md-toolbar>
     <router-view></router-view>
@@ -15,24 +25,27 @@
 
 <script>
 export default {
-  name: 'app',
+  name: "app",
   methods: {
-    logout () {
-      localStorage.removeItem('jwtToken')
+    isLogin() {
+      if (localStorage.getItem("jwtToken")) {
+        return true;
+      }
+      return false;
+    },
+    logout() {
+      localStorage.removeItem("jwtToken");
+      localStorage.removeItem("admin");
       this.$router.push({
-        name: 'Login'
-      })
+        name: "login"
+      });
     }
   }
-}
+};
 </script>
 
 <style>
-#app {
-  font-family: 'Avenir', Helvetica, Arial, sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-  color: #2c3e50;
-  text-align: center;
+.icon {
+  color: gray;
 }
 </style>

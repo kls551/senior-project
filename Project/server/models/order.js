@@ -1,19 +1,27 @@
 var mongoose = require("mongoose");
 var Schema = mongoose.Schema;
 
-var items = new Schema({
-    itemId: Number, sellPrice: Number
-  })
-  
-
 var OrderSchema = new Schema({
+  seller: {
+    type: Schema.Types.ObjectId,
+    ref: 'User'
+  },
   orderDate: {
     type: Date,
     default: Date.now
   },
+  revenue: Number,
   totalAmount: Number,
-  items: [items],
-  note: String
+  items: [{
+    quantity: Number,
+    index: Number,
+    price: Number,
+    item:
+      {
+        type: Schema.Types.ObjectId,
+        ref: 'Item'
+      }
+  }]
 });
 
 var Order = mongoose.model("Order", OrderSchema);
