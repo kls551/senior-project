@@ -23,6 +23,12 @@
         <b-row no-gutters>
           <b-col md="3">
             <b-card-img
+              v-if="!cartItem.item.images[0]"
+              src="http://localhost:8081/images/no-image-icon-17.jpg_0"
+              class="rounded-0"
+            ></b-card-img>
+            <b-card-img
+              v-if="cartItem.item.images[0]"
               :src="`http://localhost:8081/images/${cartItem.item.images[0]}`"
               class="rounded-0"
             ></b-card-img>
@@ -117,6 +123,7 @@ export default {
         username: localStorage.getItem("username")
       });
       this.cart = result.data.cart;
+      console.log(this.cart);
       this.originalCart = JSON.parse(JSON.stringify(result.data.cart));
       this.getTotal();
       console.log(this.cart);

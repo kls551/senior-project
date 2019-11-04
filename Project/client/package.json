@@ -23,7 +23,8 @@
     "vue": "^2.6.10",
     "vue-material": "^1.0.0-beta-11",
     "vue-router": "^3.0.1",
-    "vue-sweetalert2": "^2.1.1"
+    "vue-sweetalert2": "^2.1.1",
+    "vuejs-datepicker": "^1.6.2"
   },
   "devDependencies": {
     "autoprefixer": "^7.1.2",

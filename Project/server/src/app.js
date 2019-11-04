@@ -190,25 +190,16 @@ app.post('/items/images', passport.authenticate('jwt', { session: false }), (req
 app.put('/items/:id', passport.authenticate('jwt', { session: false }), (req, res) => {
   var token = getToken(req.headers);
   if (token) {
-    Item.findById(req.params.id, 'name description weight', function(
+    Item.findByIdAndUpdate(req.params.id, req.body.item, function(
       error,
       item
     ) {
       if (error) {
         console.error(error);
+        res.status(400);
+      } else {
+        res.status(200).send({item: item});
       }
-
-      item.name = req.body.name;
-      item.description = req.body.description;
-      item.weight = req.body.weight;
-      item.save(function(error) {
-        if (error) {
-          console.log(error);
-        }
-        res.send({
-          success: true
-        });
-      });
     });
   } else {
     return res.status(403).send({success: false, msg: 'Unauthorized.'});
@@ -225,7 +216,8 @@ app.delete('/items/:id', (req, res) => {
       function(err, item) {
         if (err) res.send(err);
         res.send({
-          success: true
+          success: true,
+          item: item.name
         });
       }
     );
@@ -283,49 +275,104 @@ app.post('/login', function(req, res) {
   );
 });
 
+app.get('/order/aggregate', passport.authenticate('jwt', { session: false }), (req, res) => {
+  var token = getToken(req.headers);
+  if (token) {
+    console.log(req.query)
+    let aggQuery = [
+      {
+        '$project': {
+          'items': 1,
+          'month': {
+            '$month': '$orderDate'
+          }
+        }
+      }, {
+        '$match': {
+          'month': parseInt(req.query.month)
+        }
+      }, {
+        '$unwind': '$items'
+      }, {
+        '$group': {
+          '_id': {
+            'index': '$items.index',
+            'item_id': '$items.item'
+          },
+          'totalQuantity': {
+            '$sum': '$items.quantity'
+          },
+          'totalPrice': {
+            '$sum': {
+              '$multiply': [
+                '$items.quantity', '$items.price'
+              ]
+            }
+          }
+        }
+      }, {
+        '$lookup': {
+          'from': 'items',
+          'localField': '_id.item_id',
+          'foreignField': '_id',
+          'as': 'item'
+        }
+      }
+    ];
+    Order.aggregate(aggQuery)
+    .exec((err, orders) => {
+      if (err) {
+        console.log(err);
+        res.status(400).send(err);
+      }
+      res.send(orders);
+    });
+  } else {
+    return res.status(403).send({ success: false, msg: 'Unauthorized.' });
+  }
+});
+
 app.get('/orders', passport.authenticate('jwt', { session: false }), (req, res) => {
   var token = getToken(req.headers);
   if (token) {
-    if (req.query.month === 'true') {
-      Order.aggregate([
-        {
-          $group: {
-            _id: {
-              year: {$year: '$orderDate'},
-              month: {$month: '$orderDate'}
-            },
-            totalAmount: { $sum: '$totalAmount' },
-            revenue: { $sum: '$revenue' }
-            // items: {$addToSet: '$items'}
+    if (req.query.agg) {
+      let jsonAggregate = []
+      if (req.query.agg === 'month') {
+        jsonAggregate = [
+          {
+            $group: {
+              _id: {
+                year: { $year: '$orderDate' },
+                month: { $month: '$orderDate' }
+              },
+              totalAmount: { $sum: '$totalAmount' },
+              revenue: { $sum: '$revenue' },
+            }
           }
-        },
-        // { $unwind: '$items' }, { $unwind: '$items' },
-        // { "$lookup": {
-        //     "from": "items",
-        //     "localField": "items.item",
-        //     "foreignField": "_id",
-        //     "as": "items.item"
-        // }},
-        {
-          $group: {
-            _id : {
-              year: "$_id.year",
-              month: "$_id.month"
-            },
-            totalAmount: { $first: '$totalAmount' },
-            revenue: { $first: '$revenue' },
-            // items: {$addToSet: '$items'}
+        ];
+      } else if (req.query.agg === 'year') {
+        jsonAggregate = [
+          {
+            $group: {
+              _id: {
+                year: { $year: '$orderDate' },
+              },
+              totalAmount: { $sum: '$totalAmount' },
+              revenue: { $sum: '$revenue' },
+            }
           }
-        }
-      ])
+        ];
+      }
+      Order.aggregate(jsonAggregate)
         .exec((err, or) => {
           if (err)
             console.log(err)
-          console.log(or)
           res.send(or)
-        })
+        });
     } else {
-      Order.find({}, 'seller orderDate totalAmount revenue items')
+      Order.find({
+        orderDate: { $gte: new Date(req.query.startDate), $lte: new Date(req.query.endDate) }
+      }, 'seller orderDate totalAmount revenue items')
         .populate('items.item')
         .populate('seller', 'name')
         .exec((error, orders) => {
@@ -542,11 +589,11 @@ app.put('/user/:id', passport.authenticate('jwt', { session: false }), (req, res
         } else if (req.body.oldPassword) {
           res.status(401).send({ msg: 'Password mitmatch or missing fields' })
         } else {
-          user.save((err) => {
+          user.save((err, user) => {
             if (err) {
               res.status(500);
             }
-            res.send({ msg: 'success' });
+            res.send({ success: true, user: user });
           })
         }
       }

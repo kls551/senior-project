@@ -62,7 +62,21 @@ export default {
     return Api().post(`order`, params);
   },
 
-  fetchOrders() {
-    return Api().get("orders");
+  fetchOrders(params) {
+    return Api().get(
+      `orders?startDate=${params.startDate}&endDate=${params.endDate}`
+    );
+  },
+
+  fetchItemsByMonth(params) {
+    return Api().get(`order/aggregate?month=${params}`);
+  },
+
+  fetchAggSales(arg) {
+    return Api().get(`orders?agg=${arg}`);
+  },
+
+  updateUser(params) {
+    return Api().put(`user/${params._id}`, params);
   }
 };

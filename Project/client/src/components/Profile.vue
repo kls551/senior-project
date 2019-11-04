@@ -4,7 +4,7 @@
       <b-row>
         <b-col />
         <b-col>
-          <b-form @submit="submit" @reset="getUser" v-if="user">
+          <b-form @reset="getUser" v-if="user">
             <b-form-group
               id="input-group-1"
               label="Email address:"
@@ -28,44 +28,47 @@
               ></b-form-input>
             </b-form-group>
 
-            <b-form-group
-              id="input-group-3"
-              label="Old Password:"
-              label-for="input-3"
-            >
-              <b-form-input
-                id="input-3"
-                v-model="user.oldPassword"
-                type="password"
-                placeholder="Enter Old Password"
-              ></b-form-input>
-            </b-form-group>
+            <div v-if="!userProps">
+              <b-form-group
+                id="input-group-3"
+                label="Old Password:"
+                label-for="input-3"
+              >
+                <b-form-input
+                  id="input-3"
+                  v-model="user.oldPassword"
+                  type="password"
+                  placeholder="Enter Old Password"
+                ></b-form-input>
+              </b-form-group>
 
-            <b-form-group
-              id="input-group-4"
-              label="New Password:"
-              label-for="input-4"
-            >
-              <b-form-input
-                id="input-4"
-                v-model="user.password"
-                type="password"
-                placeholder="Enter New Password"
-              ></b-form-input>
-            </b-form-group>
+              <b-form-group
+                id="input-group-4"
+                label="New Password:"
+                label-for="input-4"
+              >
+                <b-form-input
+                  id="input-4"
+                  v-model="user.password"
+                  type="password"
+                  placeholder="Enter New Password"
+                ></b-form-input>
+              </b-form-group>
 
-            <b-form-group
-              id="input-group-6"
-              label="Confirm Password:"
-              label-for="input-6"
-            >
-              <b-form-input
-                id="input-6"
-                v-model="user.conPassword"
-                type="password"
-                placeholder="Re-enter New Password"
-              ></b-form-input>
-            </b-form-group>
+              <b-form-group
+                id="input-group-6"
+                label="Confirm Password:"
+                label-for="input-6"
+              >
+                <b-form-input
+                  id="input-6"
+                  v-model="user.conPassword"
+                  type="password"
+                  placeholder="Re-enter New Password"
+                ></b-form-input>
+              </b-form-group>
+            </div>
+
             <b-form-group v-if="admin">
               <b-form-radio
                 v-model="user.admin"
@@ -83,7 +86,7 @@
               </b-form-radio>
             </b-form-group>
 
-            <b-button type="submit" variant="primary">Submit</b-button>
+            <b-button @click="updateUser" variant="primary">Submit</b-button>
             <b-button type="reset" variant="danger">Reset</b-button>
           </b-form>
         </b-col>
@@ -97,6 +100,7 @@
 import services from "@/services/services";
 
 export default {
+  props: ["userProps"],
   data() {
     return {
       user: null,
@@ -105,16 +109,29 @@ export default {
   },
   async mounted() {
     await this.getUser();
-    console.log(this.user);
   },
   methods: {
-    async submit() {
-      console.log(this.user);
+    async updateUser() {
+      let res = await services.updateUser(this.user);
+      if (res.data.success) {
+        this.$swal("Updated", "", "success");
+        if (!this.userProps) {
+          localStorage.setItem("admin", res.data.user.admin);
+          localStorage.setItem("username", res.data.user.name);
+        }
+      }
     },
     async getUser() {
-      let user = await services.getUser({
-        username: localStorage.getItem("username")
-      });
+      let user;
+      if (!this.userProps) {
+        user = await services.getUser({
+          username: localStorage.getItem("username")
+        });
+      } else {
+        user = await services.getUser({
+          username: this.userProps.name
+        });
+      }
       this.user = user.data;
     }
   }

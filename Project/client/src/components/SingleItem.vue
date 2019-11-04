@@ -167,8 +167,11 @@
             <b-button variant="light" class="icon" @click="moreItem">
               <font-awesome-icon icon="plus-circle" size="2x" />
             </b-button>
-            <b-button v-if="editing" type="submit" variant="primary">
+            <b-button v-if="editing" @click="updateItem" variant="primary">
               Done Edit
+            </b-button>
+            <b-button v-if="editing" @click="deleteItem" variant="danger">
+              Delete Item
             </b-button>
             <b-button
               v-if="editing"
@@ -247,6 +250,24 @@ export default {
     }
   },
   methods: {
+    async updateItem() {
+      let res = await services.updateItem({
+        id: this.item._id,
+        item: this.item
+      });
+      if (res.status === 200) {
+        this.$swal("Item Updated", "", "success");
+        this.item = res.data.item;
+        this.editing = false;
+      }
+    },
+    async deleteItem() {
+      let res = await services.deleteItem(this.item._id);
+      if (res.data.success) {
+        console.log(res.data.item);
+        this.$swal("Item Deleted", "", "success");
+      }
+    },
     async addToCart() {
       let res = await services.addToCart({
         username: localStorage.getItem("username"),

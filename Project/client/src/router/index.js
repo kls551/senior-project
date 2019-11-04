@@ -14,6 +14,7 @@ import SingleItem from "@/components/SingleItem";
 import Cart from "@/components/Cart";
 import Home from "@/components/Home";
 import Profile from "@/components/Profile";
+import OrderAgg from "@/components/OrderAgg";
 
 Vue.use(Router);
 Vue.use(VueMaterial);
@@ -29,7 +30,8 @@ export const router = new Router({
     {
       path: "/profile",
       name: "profile",
-      component: Profile
+      component: Profile,
+      props: true
     },
     {
       path: "/items",
@@ -66,6 +68,12 @@ export const router = new Router({
       path: "/cart",
       name: "cart",
       component: Cart
+    },
+    {
+      path: "/order/aggregate",
+      name: "orderAgg",
+      component: OrderAgg,
+      props: true
     }
   ]
 });

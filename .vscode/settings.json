@@ -1,4 +1,3 @@
 {
-    "prettier.endOfLine": "cr",
-    "prettier.printWidth": 120
+    "prettier.endOfLine": "cr"
 }

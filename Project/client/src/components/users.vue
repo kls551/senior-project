@@ -52,6 +52,7 @@
       hover
       :items="users"
       :fields="fields"
+      @row-clicked="showUser"
     />
 
     <!-- <div class="users">
@@ -114,6 +115,15 @@ export default {
     this.getUsers();
   },
   methods: {
+    showUser(user) {
+      if (localStorage.getItem("admin") === 'true') {
+        this.$router.push({
+          name: "profile",
+          path: `/profile/${user._id}`,
+          params: { userProps: user }
+        });
+      }
+    },
     async onSubmit(evt) {
       evt.preventDefault();
       console.log(JSON.stringify(this.form));

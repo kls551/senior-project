@@ -37,7 +37,7 @@ module.exports = {
     "eslint:recommended"
   ],
   rules: {
-    "max-len": ["error", { "code": 120 }],
+    "max-len": ["error", { "code": 200 }],
     "endOfLine":"auto",
     'no-console': 'off',
     'no-trailing-spaces': 'off'
