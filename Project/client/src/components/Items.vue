@@ -13,7 +13,6 @@
     <div class="table-wrap">
       <b-table
         hover
-        bordered
         head-variant="dark"
         :items="items"
         :fields="fields"
@@ -50,65 +49,6 @@
           </b-card>
         </template>
       </b-table>
-      <!-- <div class="items">
-      <h1>Items</h1>
-      <div v-if="items.length > 0" class="table-wrap">
-        <div>
-          <router-link v-bind:to="{ name: 'additem' }" class>Add Item</router-link>
-        </div>
-        <table>
-          <tr>
-            <td>Name</td>
-            <td width="550">Description</td>
-            <td>Brand</td>
-            <td>Attr</td>
-            <td>BusAttr</td>
-            <td width="100" align="center">Action</td>
-          </tr>
-          <tr v-for="item in items" :key="item._id">
-            <td>{{ item.name }}</td>
-            <td>{{ item.description }}</td>
-            <td>{{ item.brand }}</td>
-            <td>
-              <table>
-                <tr>
-                  <td>Weight</td>
-                  <td>Type</td>
-                  <td>Price</td>
-                </tr>
-                <tr v-for="(attr) in item.attr" :key="attr">
-                  <td>{{attr.weight}}</td>
-                  <td>{{attr.type}}</td>
-                  <td>{{attr.price}}</td>
-                </tr>
-              </table>
-            </td>
-            <td>
-              <table>
-                <tr>
-                  <td>Quantity</td>
-                </tr>
-                <tr v-for="(attr) in item.busAttr" :key="attr">
-                  <td>{{attr.quantity}}</td>
-                </tr>
-              </table>
-            </td>
-
-            <td align="center">
-              <router-link v-bind:to="{ name: 'edititem', params: { id: item._id } }">Edit</router-link>|
-              <a href="#" @click="deleteItem(item._id)">Delete</a>
-            </td>
-          </tr>
-        </table>
-      </div>
-      <div v-else>
-        There are no items.. Lets add one now
-        <br />
-        <br />
-        <router-link v-bind:to="{ name: 'additem' }" class="add_item_link">Add Item</router-link>
-      </div>
-      </div>-->
-      <!-- <img id='img' :src="`http://localhost:8081/images/${src}`"> -->
     </div>
   </div>
 </template>
@@ -134,6 +74,14 @@ export default {
     this.getItems();
   },
   methods: {
+    quantityProcess(items) {
+      items.forEach(item => {
+        let lowQ = item.busAttr.find(field => field.quantity < 10);
+        if(lowQ) {
+          item._rowVariant = "danger"
+        }
+      });
+    },
     addItem() {
       this.$router.push({
         name: "singleItem",
@@ -148,25 +96,9 @@ export default {
         params: { item: item }
       });
     },
-    console() {
-      console.log(this.file);
-      const fd = new FormData();
-      fd.append("img", this.file);
-      console.log(fd);
-    },
-    // async onUpload () {
-    //   var fd = new FormData()
-    //   fd.append('img', this.file)
-    //   let result = await services.uploadImage({
-    //     formData: fd,
-    //     id: '5cc8b04ea8373c3ec4daf54b',
-    //     filename: this.file.name
-    //   })
-    //   if (result.status === 201) this.$swal('Success!', '', 'success')
-    //   else this.$swal('Error!', result.data, 'error')
-    // },
     async getItems() {
       const response = await services.fetchItems();
+      this.quantityProcess(response.data.items);
       this.items = response.data.items;
     },
     async deleteItem(id) {

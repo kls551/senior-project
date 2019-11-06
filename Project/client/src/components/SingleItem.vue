@@ -239,7 +239,6 @@ export default {
   },
   mounted() {
     if (this.item) {
-      console.log(this.item);
       let minPrice = priceMin(this.item.attr);
       let maxPrice = priceMax(this.item.attr);
       if (minPrice === maxPrice) {
@@ -280,6 +279,7 @@ export default {
           title: "Added to Cart",
           autoHideDelay: 500,
           variant: "success",
+          toaster: "b-toaster-top-center",
           appendToast: false
         });
       }

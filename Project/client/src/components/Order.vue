@@ -1,5 +1,17 @@
 <template>
   <div>
+    <div v-if="isAdmin()">
+      <b-button
+        style="float: right; margin: 20px"
+        @click="updateTax"
+        pill
+        variant="primary"
+      >
+        Update Tax
+      </b-button>
+      <b-form-input class="tax-form" v-model="tax" placeholder="Tax" />
+    </div>
+
     <b-tabs content-class="mt-3" style="padding: 30px">
       <div style="text-align: center">
         <b-spinner
@@ -69,11 +81,13 @@
       </b-tab>
       <b-tab title="Yearly" @click="getAggregate('year')">
         <b-table
+          hover
           class="table-wrap"
           v-if="!loading"
           head-variant="dark"
           :items="aggOrders"
           :fields="aggFields"
+          @row-clicked="getItemsByYear"
         />
       </b-tab>
     </b-tabs>
@@ -87,6 +101,7 @@ import Datepicker from "vuejs-datepicker";
 export default {
   data() {
     return {
+      tax: parseFloat(localStorage.getItem("tax")),
       aggOrders: [],
       aggFields: [
         {
@@ -134,6 +149,9 @@ export default {
     Datepicker
   },
   methods: {
+    isAdmin() {
+      return localStorage.getItem("admin") === "true";
+    },
     monthFormatter(value) {
       let month = [
         "January",
@@ -151,12 +169,33 @@ export default {
       ];
       return month[value - 1];
     },
-    async getItemsByMonth(order) {
+    getItemsByYear(order) {
+      this.$router.push({
+        name: "orderAgg",
+        path: `/order/aggregate`,
+        params: { order: order, year: true }
+      });
+    },
+    getItemsByMonth(order) {
       this.$router.push({
         name: "orderAgg",
         path: `/order/aggregate`,
         params: { order: order }
       });
+    },
+    async updateTax() {
+      let res = await services.editTax({ tax: this.tax });
+      console.log(res.data);
+      if (res.data.updated) {
+        this.$bvToast.toast("Tax updated", {
+          title: "Updated",
+          toaster: "b-toaster-top-center",
+          autoHideDelay: 500,
+          variant: "success",
+          appendToast: false
+        });
+        localStorage.setItem("tax", this.tax);
+      }
     },
     async getAggregate(agg) {
       this.loading = true;
@@ -225,5 +264,11 @@ export default {
 }
 .button {
   align-items: left;
+}
+.tax-form {
+  float: right;
+  width: 100px;
+  margin: 20px;
+  margin-right: 0px;
 }
 </style>

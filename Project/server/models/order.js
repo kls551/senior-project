@@ -12,6 +12,7 @@ var OrderSchema = new Schema({
   },
   revenue: Number,
   totalAmount: Number,
+  tax: Number,
   items: [{
     quantity: Number,
     index: Number,

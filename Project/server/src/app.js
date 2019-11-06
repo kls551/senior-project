@@ -118,14 +118,14 @@ app.get('/images/:filename', (req, res) => {
 app.get('/items', passport.authenticate('jwt', { session: false }), (req, res) => {
   var token = getToken(req.headers);
   if (token) {
-    Item.find({}, 'name description brand attr busAttr images', function(error, items) {
+    Item.find({}, 'name description brand attr busAttr images', (error, items) =>{
       if (error) {
         console.error(error);
       }
       res.send({
         items: items
       });
-    }).sort({ _id: -1 });
+    });
   } else {
     return res.status(403).send({success: false, msg: 'Unauthorized.'});
   }
@@ -261,7 +261,8 @@ app.post('/login', function(req, res) {
               success: true,
               token: 'JWT ' + token,
               admin: user.admin,
-              name: user.name
+              name: user.name,
+              tax: user.tax
             });
           } else {
             res.status(401).send({
@@ -275,21 +276,20 @@ app.post('/login', function(req, res) {
   );
 });
 
-app.get('/order/aggregate', passport.authenticate('jwt', { session: false }), (req, res) => {
+app.get('/order/aggregate/year', passport.authenticate('jwt', { session: false }), (req, res) => {
   var token = getToken(req.headers);
   if (token) {
-    console.log(req.query)
     let aggQuery = [
       {
         '$project': {
           'items': 1,
-          'month': {
-            '$month': '$orderDate'
+          'year': {
+            '$year': '$orderDate'
           }
         }
       }, {
         '$match': {
-          'month': parseInt(req.query.month)
+          'year': parseInt(req.query.year)
         }
       }, {
         '$unwind': '$items'
@@ -319,6 +319,68 @@ app.get('/order/aggregate', passport.authenticate('jwt', { session: false }), (r
         }
       }
     ];
+
+    Order.aggregate(aggQuery)
+    .exec((err, orders) => {
+      if (err) {
+        console.log(err);
+        res.status(400).send(err);
+      }
+      res.send(orders);
+    });
+  } else {
+    return res.status(403).send({ success: false, msg: 'Unauthorized.' });
+  }
+});
+
+app.get('/order/aggregate', passport.authenticate('jwt', { session: false }), (req, res) => {
+  var token = getToken(req.headers);
+  if (token) {
+    let aggQuery = [
+      {
+        '$project': {
+          'items': 1,
+          'month': {
+            '$month': '$orderDate'
+          },
+          'year': {
+            '$year': '$orderDate'
+          }
+        }
+      }, {
+        '$match': {
+          'month': parseInt(req.query.month),
+          'year': parseInt(req.query.year)
+        }
+      }, {
+        '$unwind': '$items'
+      }, {
+        '$group': {
+          '_id': {
+            'index': '$items.index',
+            'item_id': '$items.item'
+          },
+          'totalQuantity': {
+            '$sum': '$items.quantity'
+          },
+          'totalPrice': {
+            '$sum': {
+              '$multiply': [
+                '$items.quantity', '$items.price'
+              ]
+            }
+          }
+        }
+      }, {
+        '$lookup': {
+          'from': 'items',
+          'localField': '_id.item_id',
+          'foreignField': '_id',
+          'as': 'item'
+        }
+      }
+    ];
+
     Order.aggregate(aggQuery)
     .exec((err, orders) => {
       if (err) {
@@ -517,17 +579,13 @@ app.put('/cart/:name', passport.authenticate('jwt', { session: false }), (req, r
 app.delete('/users/:id', passport.authenticate('jwt', { session: false }), (req, res) => {
   var token = getToken(req.headers);
   if (token) {
-    User.remove(
-      {
-        _id: req.params.id
-      },
-      function (err, item) {
-        if (err) res.send(err);
+    User.update({ _id: req.params.id }, {deleted: true}, (err, user) => {
+      if (err) res.send(err);
+      else 
         res.send({
           success: true
         });
-      }
-    );
+    });
   } else {
     return res.status(403).send({success: false, msg: 'Unauthorized.'});
   }
@@ -536,7 +594,7 @@ app.delete('/users/:id', passport.authenticate('jwt', { session: false }), (req,
 app.get('/users', passport.authenticate('jwt', { session: false }), (req, res) => {
   var token = getToken(req.headers);
   if (token) {
-    User.find({}, 'name email admin', function (error, users) {
+    User.find({deleted: false || null}, 'name email admin', function (error, users) {
       if (error) {
         console.error(error);
       }
@@ -556,6 +614,21 @@ app.get('/user/:name', passport.authenticate('jwt', { session: false }), (req, r
       if (user) {
         res.send(user)
       }
+    });
+  } else {
+    return res.status(403).send({ success: false, msg: 'Unauthorized.' });
+  }
+});
+
+app.put('/tax', passport.authenticate('jwt', { session: false }), (req, res) => {
+  var token = getToken(req.headers);
+  if (token) {
+    User.updateMany({}, { tax: req.body.tax }, (err) => {
+      if (err) {
+        console.log(err);
+        res.send(err);
+      }
+      res.send({ updated: true });
     });
   } else {
     return res.status(403).send({ success: false, msg: 'Unauthorized.' });

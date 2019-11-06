@@ -64,10 +64,21 @@
           </b-col>
         </b-row>
       </b-card>
-      <h4 style="float:right;margin-top:20px">
-        <b>Total Price:</b>
-        ${{ totalPrice }}
-      </h4>
+      <div style="vertical-align: middle;float: right;">
+        <h5>
+          <b>Before Tax:</b>
+          ${{ beforeTax }}
+        </h5>
+        <h5>
+          <b style="margin-right: 62px">Tax</b>
+          <b>:</b>
+          ${{ totalTax }}
+        </h5>
+        <h5>
+          <b>Total Price:</b>
+          ${{ totalPrice }}
+        </h5>
+      </div>
       <b-button
         style="margin-top: 20px"
         variant="primary"
@@ -91,8 +102,11 @@ export default {
       originalCart: null,
       cart: null,
       totalPrice: 0,
+      beforeTax: 0,
       revenue: 0,
-      updatedItems: []
+      updatedItems: [],
+      tax: parseFloat(localStorage.getItem("tax")),
+      totalTax: 0
     };
   },
   async mounted() {
@@ -105,9 +119,9 @@ export default {
         orderDate: "",
         revenue: this.revenue,
         totalAmount: this.totalPrice,
+        tax: this.totalTax,
         items: this.cart
       };
-      console.log(body);
       try {
         let res = await services.order(body);
         if (res) {
@@ -123,11 +137,8 @@ export default {
         username: localStorage.getItem("username")
       });
       this.cart = result.data.cart;
-      console.log(this.cart);
       this.originalCart = JSON.parse(JSON.stringify(result.data.cart));
       this.getTotal();
-      console.log(this.cart);
-      console.log(this.revenue);
     },
     async updateCart() {
       this.cart.forEach((item, index) => {
@@ -176,7 +187,9 @@ export default {
           cartItem.item.busAttr[cartItem.index].buyPrice * cartItem.quantity;
         cartItem.price = cartItem.item.attr[cartItem.index].price;
       });
-      this.totalPrice = total;
+      this.beforeTax = total;
+      this.totalTax = total * this.tax;
+      this.totalPrice = total + this.totalTax;
       this.revenue = total - buyTotal;
     }
   }

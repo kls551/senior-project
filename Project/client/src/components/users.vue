@@ -53,39 +53,18 @@
       :items="users"
       :fields="fields"
       @row-clicked="showUser"
-    />
-
-    <!-- <div class="users">
-      <div v-if="users.length > 0" class="table-wrap">
-        <div>
-          <router-link v-bind:to="{ name: 'adduser' }" class>Add User</router-link>
-        </div>
-        <table>
-          <tr>
-            <td>Name</td>
-            <td>Password</td>
-            <td>Admin</td>
-            <td width="100" align="center">Action</td>
-          </tr>
-          <tr v-for="user in users" :key="user._id">
-            <td>{{ user.name }}</td>
-            <td>{{ user.password }}</td>
-            <td>{{ user.admin }}</td>
-
-            <td align="center">
-              <router-link v-bind:to="{ name: 'edititem', params: { id: user._id } }">Edit</router-link>|
-              <a href="#" @click="deleteItem(user._id)">Delete</a>
-            </td>
-          </tr>
-        </table>
-      </div>
-      <div v-else>
-        There are no users.. Lets add one now
-        <br />
-        <br />
-        <router-link v-bind:to="{ name: 'adduser' }" class="add_item_link">Add User</router-link>
-      </div>
-    </div>-->
+    >
+      <template v-slot:cell(Delete)="data">
+        <b-button
+          size="sm"
+          pill
+          variant="outline-danger"
+          @click="deleteUser(data)"
+        >
+          Delete User
+        </b-button>
+      </template>
+    </b-table>
   </div>
 </template>
 
@@ -100,7 +79,8 @@ export default {
       fields: [
         { key: "name", sortable: true },
         { key: "email", sortable: true },
-        { key: "admin", sortable: true }
+        { key: "admin", sortable: true },
+        "Delete"
       ],
       users: [],
       form: {
@@ -115,6 +95,11 @@ export default {
     this.getUsers();
   },
   methods: {
+    async deleteUser(row) {
+      console.log(row.item);
+      let res = await services.deleteUser(row.item._id);
+      console.log(res.data);
+    },
     showUser(user) {
       if (localStorage.getItem("admin") === 'true') {
         this.$router.push({
@@ -126,7 +111,6 @@ export default {
     },
     async onSubmit(evt) {
       evt.preventDefault();
-      console.log(JSON.stringify(this.form));
       try {
         let result = await services.addUser(this.form);
         if (result.status === 200) {
@@ -140,7 +124,6 @@ export default {
     async getUsers() {
       const response = await services.fetchUsers();
       this.users = response.data.users;
-      console.log(this.users);
       this.users.forEach(element => {
         element.delete = this.deleteItem;
       });

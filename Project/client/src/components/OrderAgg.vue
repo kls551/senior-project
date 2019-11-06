@@ -1,8 +1,11 @@
 <template>
   <div v-if="items">
     <div class="table-wrap">
-      <h4>
+      <h4 v-if="!year">
         {{ this.month[this.order._id.month - 1] + " " + this.order._id.year }}
+      </h4>
+      <h4 v-if="year">
+        {{ this.order._id.year }}
       </h4>
     </div>
     <b-table
@@ -21,7 +24,7 @@
 import services from "@/services/services";
 
 export default {
-  props: ["order"],
+  props: ["order", "year"],
   data() {
     return {
       month: [
@@ -46,13 +49,11 @@ export default {
         {
           key: "item[0].attr",
           label: "Type",
-          sortable: true,
           formatter: (value, key, item) => value[item._id.index].type
         },
         {
           key: "item",
           label: "Price",
-          sortable: true,
           formatter: (value, key, item) => value[0].attr[item._id.index].price
         },
         { key: "totalQuantity", sortable: true },
@@ -66,7 +67,11 @@ export default {
     }
   },
   mounted() {
-    this.getItemsByMonth();
+    if (this.year) {
+      this.getItemsByYear();
+    } else {
+      this.getItemsByMonth();
+    }
   },
   methods: {
     getTotal() {
@@ -78,7 +83,19 @@ export default {
     },
     async getItemsByMonth() {
       this.loading = true;
-      let res = await services.fetchItemsByMonth(this.order._id.month);
+      let res = await services.fetchItemsByMonth({
+        month: this.order._id.month,
+        year: this.order._id.year
+      });
+      this.items = res.data;
+      this.getTotal();
+      this.loading = false;
+    },
+    async getItemsByYear() {
+      this.loading = true;
+      let res = await services.fetchItemsByYear({
+        year: this.order._id.year
+      });
       this.items = res.data;
       this.getTotal();
       this.loading = false;

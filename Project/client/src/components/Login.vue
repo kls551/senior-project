@@ -56,6 +56,7 @@ export default {
           localStorage.setItem("jwtToken", response.data.token);
           localStorage.setItem("admin", response.data.admin);
           localStorage.setItem("username", response.data.name);
+          localStorage.setItem("tax", response.data.tax);
           this.$router.push({
             name: "users"
           });

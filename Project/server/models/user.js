@@ -17,6 +17,14 @@ var UserSchema = new Schema({
     type: String,
     required: true
   },
+  tax: {
+    type: Number,
+    default: 0
+  },
+  deleted: {
+    type: Boolean,
+    default: false
+  },
   admin: Boolean,
   cart: [{
     quantity: Number,

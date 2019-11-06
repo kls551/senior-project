@@ -23,7 +23,7 @@ export default {
   },
 
   deleteUser(id) {
-    return Api().delete("users/" + id);
+    return Api().delete(`users/${id}`);
   },
 
   addUser(params) {
@@ -69,7 +69,13 @@ export default {
   },
 
   fetchItemsByMonth(params) {
-    return Api().get(`order/aggregate?month=${params}`);
+    return Api().get(
+      `order/aggregate?month=${params.month}&year=${params.year}`
+    );
+  },
+
+  fetchItemsByYear(params) {
+    return Api().get(`order/aggregate/year?year=${params.year}`);
   },
 
   fetchAggSales(arg) {
@@ -78,5 +84,9 @@ export default {
 
   updateUser(params) {
     return Api().put(`user/${params._id}`, params);
+  },
+
+  editTax(params) {
+    return Api().put(`tax`, params);
   }
 };
