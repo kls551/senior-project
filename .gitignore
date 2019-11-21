@@ -1,2 +1,4 @@
 Project/client/node_modules/*
 Project/server/node_modules/*
+Project/server/images/*
+!Project/server/images/no-image-icon-17.jpg_0

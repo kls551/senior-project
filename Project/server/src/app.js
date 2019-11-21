@@ -13,11 +13,16 @@ const morgan = require('morgan');
 const fs = require('fs');
 const multer = require('multer');
 const GridFsStorage = require('multer-gridfs-storage')
+const path = require('path')
+
 
 const app = express();
 app.use(morgan('combined'));
 app.use(bodyParser.json());
 app.use(cors());
+
+app.use(express.static(__dirname + '/../images'));
+
 
 // mongoose.connect('mongodb://localhost:27017/TeaShop', { 
 const mongoUrl = 'mongodb://localhost:27017/TeaShop'
@@ -30,37 +35,49 @@ db.once("open", function(callback){
   console.log("Connection Succeeded");
 });
 
-db.once('open', () => {
-  gfs = Grid(db.db, mongoose.mongo)
-  gfs.collection('uploads')
-  console.log('Connection Successful')
-})
+/*** COLLECTION FOR IMAGES */
+// db.once('open', () => {
+//   gfs = Grid(db.db, mongoose.mongo)
+//   gfs.collection('uploads')
+//   console.log('Connection Successful')
+// })
 
 var Item = require('../models/item');
 var User = require('../models/user');
 var Order = require('../models/order');
 
-const storage = new GridFsStorage({
-  url: mongoUrl,
-  file: (req, file) => {
-    return new Promise((resolve, reject) => {
-      crypto.randomBytes(16, (err, buf) => {
-        if (err) {
-          return reject(err)
-        }
-        const filename = file.originalname + '_' + req.params.id
-        const fileInfo = {
-          filename: filename,
-          metadata: req.params.id,
-          bucketName: 'uploads',
-        }
-        resolve(fileInfo)
-      })
-    })
-  },
-})
+/****************************** MIGHT BE USED IN FUTURE MONGODB IMAGE STORAGE***/
+// const storage = new GridFsStorage({
+//   url: mongoUrl,
+//   file: (req, file) => {
+//     return new Promise((resolve, reject) => {
+//       crypto.randomBytes(16, (err, buf) => {
+//         if (err) {
+//           return reject(err)
+//         }
+//         const filename = file.originalname + '_' + req.params.id
+//         const fileInfo = {
+//           filename: filename,
+//           metadata: req.params.id,
+//           bucketName: 'uploads',
+//         }
+//         resolve(fileInfo)
+//       })
+//     })
+//   },
+// })
 
-const upload = multer({ storage })
+/* local */
+const storage1 = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, __dirname + '/../images')
+  },
+  filename: (req, file, cb) => {
+    cb(null, file.originalname + '_' + req.params.id)
+  }
+});
+
+var upload = multer({storage: storage1});
 
 getToken = (headers) => {
   if (headers && headers.authorization) {
@@ -96,23 +113,43 @@ app.post('/images/:id', passport.authenticate('jwt', { session: false }), upload
 })
 
 app.get('/images/:filename', (req, res) => {
-  gfs.files.findOne({ filename: req.params.filename }, (err, file) => {
-    // Check if file
-    if (!file || file.length === 0) {
-      return res.status(404).json({
-        err: 'No file exists',
-      })
-    }
 
-    if (file.contentType === 'image/jpeg' || file.contentType === 'image/png') {
-      const readstream = gfs.createReadStream(file.filename)
-      readstream.pipe(res)
-    } else {
-      res.status(404).json({
-        err: 'Not an image',
-      })
+    var options = {
+      root: path.join(__dirname, '/../images'),
+      dotfiles: 'deny',
+      headers: {
+        'x-timestamp': Date.now(),
+        'x-sent': true
+      }
     }
-  })
+  
+    var fileName = req.params.filename
+    res.sendFile(fileName, options, function (err) {
+      if (err) {
+        res.status(400).send(err)
+      } else {
+        console.log('Sent:', fileName)
+      }
+    })
+  
+  /************** MONGODB IMAGE STORAGE */
+  // gfs.files.findOne({ filename: req.params.filename }, (err, file) => {
+  //   // Check if file
+  //   if (!file || file.length === 0) {
+  //     return res.status(404).json({
+  //       err: 'No file exists',
+  //     })
+  //   }
+
+  //   if (file.contentType === 'image/jpeg' || file.contentType === 'image/png') {
+  //     const readstream = gfs.createReadStream(file.filename)
+  //     readstream.pipe(res)
+  //   } else {
+  //     res.status(404).json({
+  //       err: 'Not an image',
+  //     })
+  //   }
+  // })
 })
 
 app.get('/items', passport.authenticate('jwt', { session: false }), (req, res) => {
@@ -594,7 +631,7 @@ app.delete('/users/:id', passport.authenticate('jwt', { session: false }), (req,
 app.get('/users', passport.authenticate('jwt', { session: false }), (req, res) => {
   var token = getToken(req.headers);
   if (token) {
-    User.find({deleted: false || null}, 'name email admin', function (error, users) {
+    User.find({deleted: false}, 'name email admin', function (error, users) {
       if (error) {
         console.error(error);
       }
