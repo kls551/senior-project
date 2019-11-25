@@ -14,6 +14,8 @@ import "bootstrap-vue/dist/bootstrap-vue.css";
 import { library } from "@fortawesome/fontawesome-svg-core";
 import { FontAwesomeIcon } from "@fortawesome/vue-fontawesome";
 
+import VueGraph from "vue-graph";
+
 import {
   faPlusCircle,
   faShoppingBasket,
@@ -27,6 +29,7 @@ Vue.component("font-awesome-icon", FontAwesomeIcon);
 Vue.config.productionTip = false;
 Vue.use(VueSweetalert2);
 Vue.use(BootstrapVue);
+Vue.use(VueGraph);
 /* eslint-disable */
 new Vue({
   el: '#app',

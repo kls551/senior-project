@@ -1,6 +1,6 @@
 <template>
   <div>
-    <div class="table-wrap button">
+    <div class="table-wrap button" v-if="isAdmin()">
       <b-button v-b-modal.modal-1 pill variant="primary">Add User</b-button>
     </div>
 
@@ -54,7 +54,7 @@
       :fields="fields"
       @row-clicked="showUser"
     >
-      <template v-slot:cell(Delete)="data">
+      <template v-slot:cell(Delete)="data" v-if="isAdmin()">
         <b-button
           size="sm"
           pill
@@ -79,8 +79,7 @@ export default {
       fields: [
         { key: "name", sortable: true },
         { key: "email", sortable: true },
-        { key: "admin", sortable: true },
-        "Delete"
+        { key: "admin", sortable: true }
       ],
       users: [],
       form: {
@@ -95,6 +94,9 @@ export default {
     this.getUsers();
   },
   methods: {
+    isAdmin() {
+      return localStorage.getItem("admin") === "true";
+    },
     async deleteUser(row) {
       console.log(row.item);
       let res = await services.deleteUser(row.item._id);
@@ -124,9 +126,12 @@ export default {
     async getUsers() {
       const response = await services.fetchUsers();
       this.users = response.data.users;
-      this.users.forEach(element => {
-        element.delete = this.deleteItem;
-      });
+      if (this.isAdmin()) {
+        this.fields.push("Delete");
+        this.users.forEach(element => {
+          element.delete = this.deleteItem;
+        });
+      }
     },
     async deleteItem(id) {
       const $this = this;

@@ -24,8 +24,8 @@ app.use(cors());
 app.use(express.static(__dirname + '/../images'));
 
 
-// mongoose.connect('mongodb://localhost:27017/TeaShop', { 
-const mongoUrl = 'mongodb://localhost:27017/TeaShop'
+// const mongoUrl = 'mongodb://localhost:27017/TeaShop'
+const mongoUrl = 'mongodb+srv://kls:teashop@soe-g4xtc.azure.mongodb.net/test?retryWrites=true&w=majority'
 
 mongoose.connect(mongoUrl, { 
   useNewUrlParser: true });
@@ -155,7 +155,15 @@ app.get('/images/:filename', (req, res) => {
 app.get('/items', passport.authenticate('jwt', { session: false }), (req, res) => {
   var token = getToken(req.headers);
   if (token) {
-    Item.find({}, 'name description brand attr busAttr images', (error, items) =>{
+    let filter = {};
+    if (req.query.option === "low") {
+      filter = {
+        'busAttr.quantity': {
+          '$lt': 10
+        }
+      }
+    }
+    Item.find(filter, 'name description brand attr busAttr images', (error, items) =>{
       if (error) {
         console.error(error);
       }
@@ -243,21 +251,31 @@ app.put('/items/:id', passport.authenticate('jwt', { session: false }), (req, re
   }
 });
 
-app.delete('/items/:id', (req, res) => {
+app.delete('/items/:id', async (req, res) => {
   var token = getToken(req.headers);
   if (token) {
-    Item.remove(
-      {
-        _id: req.params.id
-      },
-      function(err, item) {
-        if (err) res.send(err);
-        res.send({
-          success: true,
-          item: item.name
-        });
-      }
-    );
+    try {
+      Item.findById(req.params.id, (err, item) => {
+        item.images.forEach(image => {
+          console.log(image)
+          fs.unlink(__dirname + `/../images/${image}`, (err) => {
+            if (err) console.log(err)
+          });
+        })
+      });
+      await Item.deleteOne(
+        {
+          _id: req.params.id
+        }, (err) => {
+          if (err) res.send(err);
+          res.send({
+            success: true
+          });
+        }
+      );
+    } catch (err) {
+      res.send(err)
+    }
   } else {
     return res.status(403).send({success: false, msg: 'Unauthorized.'});
   }
@@ -415,6 +433,8 @@ app.get('/order/aggregate', passport.authenticate('jwt', { session: false }), (r
           'foreignField': '_id',
           'as': 'item'
         }
+      }, {
+        '$sort': { '_id.month' : 1, '_id.year' : 1}
       }
     ];
 
@@ -447,6 +467,11 @@ app.get('/orders', passport.authenticate('jwt', { session: false }), (req, res) 
               totalAmount: { $sum: '$totalAmount' },
               revenue: { $sum: '$revenue' },
             }
+          },
+          {
+            $sort: {
+              '_id.month': 1, '_id.year': 1
+            }
           }
         ];
       } else if (req.query.agg === 'year') {
@@ -458,6 +483,11 @@ app.get('/orders', passport.authenticate('jwt', { session: false }), (req, res) 
               },
               totalAmount: { $sum: '$totalAmount' },
               revenue: { $sum: '$revenue' },
+            }
+          },
+          {
+            $sort: {
+              '_id.year': 1
             }
           }
         ];
@@ -474,6 +504,7 @@ app.get('/orders', passport.authenticate('jwt', { session: false }), (req, res) 
       }, 'seller orderDate totalAmount revenue items')
         .populate('items.item')
         .populate('seller', 'name')
+        .sort({ 'orderDate': 1 })
         .exec((error, orders) => {
           if (error) {
             console.error(error);
@@ -516,6 +547,18 @@ app.post('/order', passport.authenticate('jwt', { session: false }), function (r
     })
   } else {
       return res.status(403).send({success: false, msg: 'Unauthorized.'});
+  }
+});
+
+app.delete('/order/:id', passport.authenticate('jwt', { session: false }), (req, res) => {
+  var token = getToken(req.headers);
+  if (token) {
+    Order.deleteOne({ _id: req.params.id }, (err) => {
+      if (err) res.send(err)
+      else res.send({success: true})
+    })
+  } else {
+    return res.status(403).send({success: false, msg: 'Unauthorized.'});
   }
 });
 

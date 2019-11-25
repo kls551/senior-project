@@ -2,8 +2,12 @@ import Api from "@/services/Api";
 // import axios from 'axios'
 
 export default {
-  fetchItems() {
-    return Api().get("items");
+  fetchItems(option) {
+    return Api().get(`items?option=${option}`);
+  },
+
+  deleteOrder(id) {
+    return Api().delete(`order/${id}`);
   },
 
   addItem(params) {

@@ -125,6 +125,7 @@ export default {
       try {
         let res = await services.order(body);
         if (res) {
+          await this.getCart();
           this.$swal("Order added!", "", "success");
         }
       } catch (err) {

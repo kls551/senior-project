@@ -86,7 +86,9 @@
             >
               Add to cart
             </b-button>
-            <b-button variant="info" @click="populateForm">Edit Item</b-button>
+            <b-button v-if="isAdmin()" variant="info" @click="populateForm">
+              Edit Item
+            </b-button>
           </div>
         </b-card>
 
@@ -249,6 +251,9 @@ export default {
     }
   },
   methods: {
+    isAdmin() {
+      return localStorage.getItem("admin") === "true";
+    },
     async updateItem() {
       let res = await services.updateItem({
         id: this.item._id,
@@ -263,8 +268,8 @@ export default {
     async deleteItem() {
       let res = await services.deleteItem(this.item._id);
       if (res.data.success) {
-        console.log(res.data.item);
         this.$swal("Item Deleted", "", "success");
+        this.$router.go(-1);
       }
     },
     async addToCart() {

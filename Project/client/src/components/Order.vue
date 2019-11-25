@@ -22,7 +22,7 @@
           label="Spinning"
         ></b-spinner>
       </div>
-      <b-tab title="All" active>
+      <b-tab title="All" active @click="getItems()">
         <b-container fluid>
           <b-row />
           <b-row>
@@ -56,6 +56,15 @@
                 </template>
 
                 <template v-slot:row-details="row">
+                  <b-button
+                    variant="warning"
+                    size="sm"
+                    @click="deleteOrder(row.item._id)"
+                    style="margin: 10px"
+                    v-if="isAdmin()"
+                  >
+                    Delete Order
+                  </b-button>
                   <b-table
                     class="table-dark"
                     :items="row.item.table"
@@ -90,6 +99,29 @@
           @row-clicked="getItemsByYear"
         />
       </b-tab>
+      <b-container fluid>
+        <b-row>
+          <b-col></b-col>
+          <b-col>
+            <graph-line
+              :width="900"
+              :height="700"
+              :shape="'normal'"
+              :axis-min="0"
+              :axis-full-mode="true"
+              :labels="graph.labels"
+              :names="graph.names"
+              :values="graph.values"
+            >
+              <note :text="'Orders'"></note>
+              <tooltip :names="graph.names" :position="'right'"></tooltip>
+              <legends :names="graph.names"></legends>
+              <guideline :tooltip-y="true"></guideline>
+            </graph-line>
+          </b-col>
+          <b-col></b-col>
+        </b-row>
+      </b-container>
     </b-tabs>
   </div>
 </template>
@@ -101,6 +133,11 @@ import Datepicker from "vuejs-datepicker";
 export default {
   data() {
     return {
+      graph: {
+        names: ["Revenue", "Total Amount"],
+        values: [[], []],
+        labels: []
+      },
       tax: parseFloat(localStorage.getItem("tax")),
       aggOrders: [],
       aggFields: [
@@ -139,7 +176,8 @@ export default {
         { key: "price", sortable: true },
         { key: "quantity", sortable: true },
         { key: "itemTotal", sortable: true }
-      ]
+      ],
+      chartData: []
     };
   },
   mounted() {
@@ -151,6 +189,28 @@ export default {
   methods: {
     isAdmin() {
       return localStorage.getItem("admin") === "true";
+    },
+    async deleteOrder(id) {
+      this.$swal({
+        title: "Are you sure?",
+        text: "You won't be able to revert this!",
+        type: "warning",
+        showCancelButton: true,
+        confirmButtonColor: "#3085d6",
+        cancelButtonColor: "#d33",
+        confirmButtonText: "Yes, delete it!"
+      }).then(async result => {
+        if (result.value) {
+          console.log(id);
+          let res = await services.deleteOrder(id);
+          console.log(res.data);
+          if (res.data.success === true) {
+            this.$swal("Deleted!", "The order has been deleted.", "success");
+            await this.getItems();
+          } else
+            this.$swal("Something wrong!", "The order not deleted.", "error");
+        }
+      });
     },
     monthFormatter(value) {
       let month = [
@@ -168,6 +228,13 @@ export default {
         "December"
       ];
       return month[value - 1];
+    },
+    resetGraph() {
+      this.graph = {
+        names: ["Revenue", "Total Amount"],
+        values: [[], []],
+        labels: []
+      };
     },
     getItemsByYear(order) {
       this.$router.push({
@@ -198,6 +265,7 @@ export default {
       }
     },
     async getAggregate(agg) {
+      this.resetGraph();
       this.loading = true;
       if (agg === "month") {
         let monthLabel = this.aggFields[0].label === "Month";
@@ -213,9 +281,19 @@ export default {
       }
       let result = await services.fetchAggSales(agg);
       this.aggOrders = result.data;
+      this.aggOrders.forEach(orderAg => {
+        this.graph.values[0].push(orderAg.revenue);
+        this.graph.values[1].push(orderAg.totalAmount);
+        this.graph.labels.push(
+          agg === "month"
+            ? orderAg._id.month.toString() + " " + orderAg._id.year.toString()
+            : orderAg._id.year.toString()
+        );
+      });
       this.loading = false;
     },
     processData(data) {
+      this.resetGraph();
       let new_data = JSON.parse(JSON.stringify(data));
       new_data.forEach(order => {
         let orderDate = new Date(order.orderDate);
@@ -224,6 +302,9 @@ export default {
           orderDate.getHours().toString() +
           ":" +
           orderDate.getMinutes().toString();
+        this.graph.values[0].push(order.revenue);
+        this.graph.values[1].push(order.totalAmount);
+        this.graph.labels.push(order.orderDate.toDateString());
         order.items.forEach(item => {
           let info = {
             name: item.item.name,

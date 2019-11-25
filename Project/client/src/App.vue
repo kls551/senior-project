@@ -13,6 +13,9 @@
         <md-button :to="{ name: 'cart' }" v-if="isLogin()">
           <font-awesome-icon icon="shopping-basket" size="2x" />
         </md-button>
+        <md-button v-if="!isLogin()" v-bind:to="{ name: 'home' }">
+          Home
+        </md-button>
         <md-button v-if="!isLogin()" v-bind:to="{ name: 'login' }">
           Login
         </md-button>

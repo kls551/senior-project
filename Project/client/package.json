@@ -21,6 +21,7 @@
     "bootstrap": "^4.3.1",
     "bootstrap-vue": "^2.0.2",
     "vue": "^2.6.10",
+    "vue-graph": "^0.8.7",
     "vue-material": "^1.0.0-beta-11",
     "vue-router": "^3.0.1",
     "vue-sweetalert2": "^2.1.1",
