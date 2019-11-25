@@ -737,9 +737,12 @@ app.put('/user/:id', passport.authenticate('jwt', { session: false }), (req, res
                   user: user
                 });
               })
+            } else {
+              res.status(401).send({ msg: 'Password mitmatch or missing fields' })
             }
           });
         } else if (req.body.oldPassword) {
+          console.log('here');
           res.status(401).send({ msg: 'Password mitmatch or missing fields' })
         } else {
           user.save((err, user) => {

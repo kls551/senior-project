@@ -112,13 +112,17 @@ export default {
   },
   methods: {
     async updateUser() {
-      let res = await services.updateUser(this.user);
-      if (res.data.success) {
-        this.$swal("Updated", "", "success");
-        if (!this.userProps) {
-          localStorage.setItem("admin", res.data.user.admin);
-          localStorage.setItem("username", res.data.user.name);
+      try {
+        let res = await services.updateUser(this.user);
+        if (res.data.success) {
+          this.$swal("Updated", "", "success");
+          if (!this.userProps) {
+            localStorage.setItem("admin", res.data.user.admin);
+            localStorage.setItem("username", res.data.user.name);
+          }
         }
+      } catch (err) {
+        this.$swal("Error!", err.response.data.msg, "error");
       }
     },
     async getUser() {
