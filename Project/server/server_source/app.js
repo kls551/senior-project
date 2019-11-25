@@ -2,8 +2,8 @@ var passport = require('passport');
 var settings = require('../config/settings');
 require('../config/passport')(passport);
 var jwt = require('jsonwebtoken');
-var crypto = require('crypto');
-var Grid = require('gridfs');
+// var crypto = require('crypto');
+// var Grid = require('gridfs');
 var mongoose = require('mongoose');
 
 const express = require('express');
@@ -12,9 +12,10 @@ const cors = require('cors');
 const morgan = require('morgan');
 const fs = require('fs');
 const multer = require('multer');
-const GridFsStorage = require('multer-gridfs-storage')
+// const GridFsStorage = require('multer-gridfs-storage')
 const path = require('path')
 
+const env = require('dotenv').config()
 
 const app = express();
 app.use(morgan('combined'));
@@ -23,9 +24,7 @@ app.use(cors());
 
 app.use(express.static(__dirname + '/../images'));
 
-
-// const mongoUrl = 'mongodb://localhost:27017/TeaShop'
-const mongoUrl = 'mongodb+srv://kls:teashop@soe-g4xtc.azure.mongodb.net/test?retryWrites=true&w=majority'
+const mongoUrl = process.env.URL
 
 mongoose.connect(mongoUrl, { 
   useNewUrlParser: true });
