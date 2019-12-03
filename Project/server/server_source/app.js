@@ -24,7 +24,8 @@ app.use(cors());
 
 app.use(express.static(__dirname + '/../images'));
 
-const mongoUrl = process.env.URL
+// const mongoUrl = process.env.URL
+const mongoUrl = "mongodb://localhost:27017/TeaShop"
 
 mongoose.connect(mongoUrl, { 
   useNewUrlParser: true });
@@ -242,7 +243,7 @@ app.put('/items/:id', passport.authenticate('jwt', { session: false }), (req, re
         console.error(error);
         res.status(400);
       } else {
-        res.status(200).send({item: item});
+        res.status(200).send({item: req.body.item});
       }
     });
   } else {
@@ -606,48 +607,52 @@ app.put('/cart/:name', passport.authenticate('jwt', { session: false }), (req, r
       item: req.body.itemId
     }
 
-    User.findOne({ name: req.params.name.toLowerCase() }, (err, user) => {
-      if (err) throw err;
-
-      if (!user) {
-        res.status(401).send({
-          success: false,
-          msg: 'Authentication failed. User not found.'
-        });
-      } else {
-        let itemExist = user.cart.findIndex(item => {
-          return item.item.toString() === body.item && body.index === item.index
-        });
-        if (itemExist >= 0) {
-          user.cart[itemExist].quantity += body.quantity;
-          if (user.cart[itemExist].quantity <= 0) {
-            user.cart.splice(itemExist, 1);
-          }
+    Item.findById(body.item, 'busAttr', (err, item) => {
+      if (item) {
+        item.busAttr[body.index].quantity -= body.quantity;
+        if (item.busAttr[body.index].quantity < 0) {
+          res.status(400).send("not enough quantity");
         } else {
-          user.cart.push(body);
-        }
-        user.save((error) => {
-          if (error) {
-            console.log(error);
-          }
-          else {
-            Item.findById(body.item, 'busAttr', (err, item) => {
-              if (item) {
-                item.busAttr[body.index].quantity -= body.quantity;
-                item.save((err) => {
-                  if (err) {
-                    console.log(err);
-                  }
-                  else {
-                    res.send({
-                      success: true
-                    })
-                  }
-                })
+          User.findOne({ name: req.params.name.toLowerCase() }, (err, user) => {
+            if (err) throw err;
+
+            if (!user) {
+              res.status(401).send({
+                success: false,
+                msg: 'Authentication failed. User not found.'
+              });
+            } else {
+              let itemExist = user.cart.findIndex(item => {
+                return item.item.toString() === body.item && body.index === item.index
+              });
+              if (itemExist >= 0) {
+                user.cart[itemExist].quantity += body.quantity;
+                if (user.cart[itemExist].quantity <= 0) {
+                  user.cart.splice(itemExist, 1);
+                }
+              } else {
+                user.cart.push(body);
               }
-            });
-          }
-        });
+              user.save((error) => {
+                if (error) {
+                  console.log(error);
+                }
+                else {
+                  item.save((err) => {
+                    if (err) {
+                      console.log(err);
+                    }
+                    else {
+                      res.send({
+                        success: true
+                      })
+                    }
+                  })
+                }
+              });
+            }
+          })
+        }
       }
     });
   } else {

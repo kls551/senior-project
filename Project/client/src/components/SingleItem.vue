@@ -44,7 +44,7 @@
         <b-card v-if="item && !editing">
           <b-card-body>
             <h1>{{ item.name }}</h1>
-            <b-card-text>
+            <b-card-text v-if="price">
               <b>Description:</b>
               {{ item.description }}
               <br />
@@ -205,9 +205,10 @@ let priceMax = data => {
 };
 export default {
   name: "singleItem",
-  props: ["item", "adding"],
+  props: ["parentitem", "adding"],
   data() {
     return {
+      item: null,
       form: {
         name: "",
         description: "",
@@ -235,9 +236,10 @@ export default {
     };
   },
   beforeMount() {
-    if (!this.item && !this.adding) {
+    if (!this.parentitem && !this.adding) {
       this.$router.go(-1);
     }
+    this.item = this.parentitem;
   },
   mounted() {
     if (this.item) {
@@ -262,6 +264,14 @@ export default {
       if (res.status === 200) {
         this.$swal("Item Updated", "", "success");
         this.item = res.data.item;
+        console.log(res.data.item);
+        let minPrice = priceMin(this.item.attr);
+        let maxPrice = priceMax(this.item.attr);
+        if (minPrice === maxPrice) {
+          this.price = "$" + minPrice.toString();
+        } else {
+          this.price = "$" + minPrice.toString() + " - $" + maxPrice.toString();
+        }
         this.editing = false;
       }
     },
@@ -273,20 +283,24 @@ export default {
       }
     },
     async addToCart() {
-      let res = await services.addToCart({
-        username: localStorage.getItem("username"),
-        itemId: this.item._id,
-        itemIndex: parseInt(this.chosenType),
-        quantity: 1
-      });
-      if (res.data.success) {
-        this.$bvToast.toast(`Item added to cart`, {
-          title: "Added to Cart",
-          autoHideDelay: 500,
-          variant: "success",
-          toaster: "b-toaster-top-center",
-          appendToast: false
+      try {
+        let res = await services.addToCart({
+          username: localStorage.getItem("username"),
+          itemId: this.item._id,
+          itemIndex: parseInt(this.chosenType),
+          quantity: 1
         });
+        if (res.status === 200) {
+          this.$bvToast.toast(`Item added to cart`, {
+            title: "Added to Cart",
+            autoHideDelay: 500,
+            variant: "success",
+            toaster: "b-toaster-top-center",
+            appendToast: false
+          });
+        }
+      } catch (err) {
+        this.$swal("Error", err.response.data, "error");
       }
     },
     populateForm() {

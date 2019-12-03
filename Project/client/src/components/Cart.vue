@@ -159,13 +159,20 @@ export default {
       this.getCart();
     },
     async addToCart(item) {
-      let res = await services.addToCart(item);
-      if (res.data.success) {
-        this.$bvToast.toast(`Cart item updated`, {
-          title: "Added to Cart",
-          autoHideDelay: 5000,
-          variant: "success",
-          appendToast: false
+      try {
+        let res = await services.addToCart(item);
+        if (res.data.success) {
+          this.$bvToast.toast(`Cart item updated`, {
+            title: "Added to Cart",
+            autoHideDelay: 5000,
+            variant: "success",
+            appendToast: false
+          });
+        }
+      } catch (err) {
+        this.$bvToast.toast(err.response.data, {
+          title: "Failed to update",
+          variant: "danger"
         });
       }
     },

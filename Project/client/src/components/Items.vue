@@ -206,7 +206,7 @@ export default {
       this.$router.push({
         name: "singleItem",
         path: `/item/${item.id}`,
-        params: { item: item }
+        params: { parentitem: item }
       });
     },
     async getItems(option) {

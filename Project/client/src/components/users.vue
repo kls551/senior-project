@@ -4,7 +4,7 @@
       <b-button v-b-modal.modal-1 pill variant="primary">Add User</b-button>
     </div>
 
-    <b-modal id="modal-1" title="Add User">
+    <b-modal id="modal-1" title="Add User" @hidden="resetForm()">
       <b-form @submit="onSubmit">
         <b-form-group id="input-group-1" label="Email address:">
           <b-form-input
@@ -94,13 +94,27 @@ export default {
     this.getUsers();
   },
   methods: {
+    resetForm() {
+      this.form = {
+        email: "",
+        name: "",
+        password: "",
+        admin: false
+      };
+    },
     isAdmin() {
       return localStorage.getItem("admin") === "true";
     },
     async deleteUser(row) {
-      console.log(row.item);
       let res = await services.deleteUser(row.item._id);
-      console.log(res.data);
+      if (res.status === 200) {
+        this.$swal("User deleted", "", "success");
+        this.getUsers();
+
+      } else {
+        console.log(res);
+        this.$swal("Error deleting", "", "error");
+      }
     },
     showUser(user) {
       if (localStorage.getItem("admin") === 'true') {
@@ -117,11 +131,14 @@ export default {
         let result = await services.addUser(this.form);
         if (result.status === 200) {
           this.$swal("Great!", `A user has been added!`, "success");
+          this.$bvModal.hide("modal-1");
           this.getUsers();
         }
       } catch (error) {
         this.$swal("Error!", error.response.data, "error");
       }
+      this.resetForm();
+
     },
     async getUsers() {
       const response = await services.fetchUsers();
