@@ -24,8 +24,8 @@ app.use(cors());
 
 app.use(express.static(__dirname + '/../images'));
 
-// const mongoUrl = process.env.URL
-const mongoUrl = "mongodb://localhost:27017/TeaShop"
+const mongoUrl = process.env.URL
+// const mongoUrl = "mongodb://localhost:27017/TeaShop"
 
 mongoose.connect(mongoUrl, { 
   useNewUrlParser: true });
