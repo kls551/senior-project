@@ -37,7 +37,7 @@
                         <td>Type</td>
                         <td>Price</td>
                         <td>Quantity</td>
-                        <td v-if="isAdmin()">Add Order</td>
+                        <td v-if="isAdmin()">Update Inventory</td>
                       </tr>
                     </thead>
                     <tbody>
@@ -59,7 +59,7 @@
                               )
                             "
                           >
-                            Add Order
+                            Update Inventory
                           </b-button>
                         </td>
                       </tr>
