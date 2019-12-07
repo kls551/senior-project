@@ -35,6 +35,17 @@
           ></b-form-input>
         </b-form-group>
 
+        <b-form-group label="Confirm Password:">
+          <b-form-input
+            v-model="form.rePassword"
+            :state="form.password !== '' && form.rePassword === form.password"
+            invalid-feedback="Passwords do not match"
+            type="password"
+            required
+            placeholder="Re-Enter password"
+          ></b-form-input>
+        </b-form-group>
+
         <b-form-group>
           <b-form-radio v-model="form.admin" name="some-radios" value="true">
             is admin
@@ -86,6 +97,7 @@ export default {
         email: "",
         name: "",
         password: "",
+        rePassword: "",
         admin: false
       }
     };
@@ -99,6 +111,7 @@ export default {
         email: "",
         name: "",
         password: "",
+        rePassword: "",
         admin: false
       };
     },
@@ -126,19 +139,22 @@ export default {
       }
     },
     async onSubmit(evt) {
-      evt.preventDefault();
-      try {
-        let result = await services.addUser(this.form);
-        if (result.status === 200) {
-          this.$swal("Great!", `A user has been added!`, "success");
-          this.$bvModal.hide("modal-1");
-          this.getUsers();
+      if(this.form.password !== this.form.rePassword) {
+        this.$swal("Passwords do not match", "", "error");
+      } else {
+        evt.preventDefault();
+        try {
+          let result = await services.addUser(this.form);
+          if (result.status === 200) {
+            this.$swal("Great!", `A user has been added!`, "success");
+            this.$bvModal.hide("modal-1");
+            this.getUsers();
+          }
+        } catch (error) {
+          this.$swal("Error!", error.response.data, "error");
         }
-      } catch (error) {
-        this.$swal("Error!", error.response.data, "error");
+        this.resetForm();
       }
-      this.resetForm();
-
     },
     async getUsers() {
       const response = await services.fetchUsers();

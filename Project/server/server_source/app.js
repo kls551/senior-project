@@ -24,8 +24,8 @@ app.use(cors());
 
 app.use(express.static(__dirname + '/../images'));
 
-const mongoUrl = process.env.URL
-// const mongoUrl = "mongodb://localhost:27017/TeaShop"
+// const mongoUrl = process.env.URL
+const mongoUrl = "mongodb://localhost:27017/TeaShop"
 
 mongoose.connect(mongoUrl, { 
   useNewUrlParser: true });
@@ -266,11 +266,22 @@ app.delete('/items/:id', async (req, res) => {
       await Item.deleteOne(
         {
           _id: req.params.id
-        }, (err) => {
+        }, async (err) => {
           if (err) res.send(err);
-          res.send({
-            success: true
-          });
+
+          await Order.deleteMany({
+            'items': {
+              '$elemMatch': {
+                'item': req.params.id
+              }
+            }
+          }, (err) => {
+            if (err) res.send(err);
+            
+            res.send({
+              success: true
+            });
+          })
         }
       );
     } catch (err) {
